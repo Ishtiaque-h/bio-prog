@@ -8,13 +8,13 @@ Tie to project requirement (quote the bullet from the spec).
 Key design decisions (parsing, rounding, error handling).
 
 ```bash
-git checkout -b feat/branch_name
+git checkout -b feat/<branch-name>
 # add files
 git add .
 git commit -m "chore: scaffold project structure"
 git push -u origin feat/scaffold
 ```
-Make sure to change the **"branch_name"** for every commits
+Make sure to change the **<branch-name>** for every commits
 
 ## How to test PR
 - [ ] Tiny FASTA happy-path
@@ -26,7 +26,7 @@ Make sure to change the **"branch_name"** for every commits
 - open PR → you review → merge
 - loccally:
 
-``'bash
+```bash
 # fresh clone
 git clone <repo>
 cd repo
@@ -40,7 +40,6 @@ git checkout <branch-name>
 # run minimal demos (PR description should list exact commands)
 python main.py analyze -i data/tiny.fasta
 python main.py analyze -i data/tiny.fastq
-
 ```
 
 ## Screenshots / Logs
