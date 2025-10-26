@@ -7,6 +7,15 @@ Tie to project requirement (quote the bullet from the spec).
 ## How
 Key design decisions (parsing, rounding, error handling).
 
+```bash
+git checkout -b feat/branch_name
+# add files
+git add .
+git commit -m "chore: scaffold project structure"
+git push -u origin feat/scaffold
+```
+Make sure to change the **"branch_name"** for every commits
+
 ## Tests
 - [ ] Tiny FASTA happy-path
 - [ ] Tiny FASTQ happy-path
