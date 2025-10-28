@@ -26,75 +26,48 @@ def detect_extension(filename):
     else:
         return None
 =======
-def read_fasta(file):
- f= _open(file, "r")   
-    lines = []
-    for line in f:
+def read_fasta(path_or_file) -> Iterator[Tuple[str, str]]:
+    """
+    Yield (header, sequence) from a FASTA file.
+    Header returned without leading '>'.
+    WHole file will not be loaded into memory.
+    """
+    fh = _open(path_or_file, "r")
+    header: Optional[str] = None
+    seq_chunks = []
+    for line in fh:
         line = line.strip()
-        if line != "":
-            lines.append(line)
-
-    if len(lines) == 0:
-        print("Error: The file is empty.")
-        return None
-
-    if not lines[0].startswith(">"):
-        print("Error: FASTA file must start with '>'.")
-        return None
-
-    seqs = []
-    header = ""
-    seq = ""
-
-    for line in lines:
+        if not line:
+            continue
         if line.startswith(">"):
-            if header != "":
-                seqs.append((header, seq))
-            header = line[1:]
-            seq = ""
+            if header is not None:
+                yield header, "".join(seq_chunks)
+            header = line[1:].strip()
+            seq_chunks = []
         else:
-            seq = seq + line
-
-    if header != "" and seq != "":
-        seqs.append((header, seq))
-
-    return seqs
+            seq_chunks.append(line)
+    if header is not None:
+        yield header, "".join(seq_chunks)
 =======
-def read_fastq(file):
-    f = _open(file, "r")
-    lines = []
-    for line in f:
-        line = line.strip()
-        if line != "":
-            lines.append(line)
-
-    if len(lines) == 0:
-        print("Error: The file is empty.")
-        return None
-
-    if len(lines) % 4 != 0:
-        print("Error: FASTQ files must have groups of 4 lines per record.")
-        return None
-
-    seqs = []
-    i = 0
-    while i < len(lines):
-        header = lines[i]
-        seq = lines[i + 1]
-        plus = lines[i + 2]
-        qual = lines[i + 3]
-
-        if not header.startswith("@"):
-            print("Error: FASTQ header must start with '@'.")
-            return None
-        if not plus.startswith("+"):
-            print("Error: Third line must start with '+'.")
-            return None
-        if len(seq) != len(qual):
-            print("Error: Sequence and quality must be same length.")
-            return None
-
-        seqs.append((header[1:], seq, qual))
-        i = i + 4
-
-    return seqs
+def read_fastq(path_or_file) -> Iterator[Tuple[str, str, str]]:
+    """
+    Yield (header, sequence, quality) from a FASTQ file.
+    Header returned without leading '@'.
+    """
+    fh = _open(path_or_file, "r")
+    line_num = 0
+    while True:
+        h = fh.readline(); line_num += 1
+        if not h:
+            break
+        seq = fh.readline(); line_num += 1
+        plus = fh.readline(); line_num += 1
+        qual = fh.readline(); line_num += 1
+        if not (seq and plus and qual):
+            raise ValueError(f"Truncated FASTQ record near line {line_num}.")
+        if not h.startswith("@") or not plus.startswith("+"):
+            raise ValueError(f"Invalid FASTQ format near line {line_num-3}.")
+        s = seq.strip(); q = qual.strip()
+        if len(s) != len(q):
+            raise ValueError(f"FASTQ sequence/quality length mismatch near line {line_num-3}.")
+        yield h[1:].strip(), s, q
