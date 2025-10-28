@@ -6,12 +6,12 @@
 '''
 <<<<<<< bio/io.py
 
-=======
+#---------------imports-----------------------
 import os
 from pathlib import Path
+from typing import Iterator, Tuple, Iterable, TextIO, Optional
 
-=====================
-
+#-----------------file opening handler----------------
 def _open(filename, mode: str):
     """Open a sequence file."""
     if not os.path.exists(filename):
@@ -19,8 +19,8 @@ def _open(filename, mode: str):
         return None
     return open(filename, mode)
 
-======
 
+#----------------extension checker---------------
 def detect_extension(filename):
     # Check file extension to know if it's FASTA or FASTQ
     if filename.endswith((".fasta", ".fa",".fsa", ".fna", ".seq",".pep"):
@@ -30,14 +30,11 @@ def detect_extension(filename):
     else:
         return None
 
-=======
-
-=======
+#-------------------fasta parser---------------------
 def read_fasta(path_or_file) -> Iterator[Tuple[str, str]]:
     """
     Yield (header, sequence) from a FASTA file.
     Header returned without leading '>'.
-    WHole file will not be loaded into memory.
     """
     fh = _open(path_or_file, "r")
     header: Optional[str] = None
@@ -55,7 +52,16 @@ def read_fasta(path_or_file) -> Iterator[Tuple[str, str]]:
             seq_chunks.append(line)
     if header is not None:
         yield header, "".join(seq_chunks)
-=======
+
+#-------------------write fasta sequences------------------
+def write_fasta(records: Iterable[Tuple[str, str]], path_or_file, line_width: int = 80) -> None:
+    fh = _open(path_or_file, "w")
+    for header, seq in records:
+        fh.write(f">{header}\n")
+        for i in range(0, len(seq), line_width):
+            fh.write(seq[i:i+line_width] + "\n")
+
+#-------------------fastq parser--------------------------
 def read_fastq(path_or_file) -> Iterator[Tuple[str, str, str]]:
     """
     Yield (header, sequence, quality) from a FASTQ file.
@@ -79,4 +85,8 @@ def read_fastq(path_or_file) -> Iterator[Tuple[str, str, str]]:
             raise ValueError(f"FASTQ sequence/quality length mismatch near line {line_num-3}.")
         yield h[1:].strip(), s, q
 
-
+#---------------------write fastq sequences----------------------
+def write_fastq(records: Iterable[Tuple[str, str, str]], path_or_file) -> None:
+    fh = _open(path_or_file, "w")
+    for header, seq, qual in records:
+        fh.write(f"@{header}\n{seq}\n+\n{qual}\n")
