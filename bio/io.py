@@ -12,12 +12,10 @@ from pathlib import Path
 from typing import Iterator, Tuple, Iterable, TextIO, Optional
 
 #-----------------file opening handler----------------
-def _open(filename, mode: str):
-    """Open a sequence file."""
-    if not os.path.exists(filename):
-        print('Error - Invalid filename.')
-        return None
-    return open(filename, mode)
+def _open(path_or_file, mode: str = "r") -> TextIO:
+    if hasattr(path_or_file, "read"):
+        return path_or_file  # already a file-like
+    return open(Path(path_or_file), mode, encoding="utf-8")
 
 
 #----------------extension checker---------------
