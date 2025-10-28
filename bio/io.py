@@ -4,14 +4,22 @@
  I/O files (FASTA/ FASTQ readers & writers)
 ------------------------------------------------
 '''
+
+
 def open_file(filename):
     """Open a sequence file."""
     if not os.path.exists(filename):
         print('Error - Invalid filename.')
         return None
-
-    
     return open(filename, 'r') as f
 
+def detect_extension(filename):
+    # Check file extension to know if it's FASTA or FASTQ
+    if filename.endswith((".fasta", ".fa",".fsa", ".fna", ".seq",".pep"):
+        return "FASTA"
+    elif filename.endswith(".fastq",".fq"):
+        return "FASTQ"
+    else:
+        return None
 
 
