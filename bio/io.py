@@ -4,6 +4,9 @@
  I/O files (FASTA/ FASTQ readers & writers)
 ------------------------------------------------
 '''
+<<<<<<< bio/io.py
+
+=======
 import os
 from pathlib import Path
 
@@ -14,5 +17,13 @@ def _open(filename, mode: str):
         return None
     return open(filename, mode)
 
+def detect_extension(filename):
+    # Check file extension to know if it's FASTA or FASTQ
+    if filename.endswith((".fasta", ".fa",".fsa", ".fna", ".seq",".pep"):
+        return "FASTA"
+    elif filename.endswith(".fastq",".fq"):
+        return "FASTQ"
+    else:
+        return None
 
 
