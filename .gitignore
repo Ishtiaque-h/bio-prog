@@ -1,7 +1,8 @@
 # ignore system files
-.DS_Store
+DS_Store
 .venv
 
 # ignore data files
 data/
+test/
 

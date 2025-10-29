@@ -4,9 +4,8 @@
  I/O files (FASTA/ FASTQ readers & writers)
 ------------------------------------------------
 '''
-<<<<<<< bio/io.py
 
-#---------------imports-----------------------
+#---------------imports------------------------------
 import os
 from pathlib import Path
 from typing import Iterator, Tuple, Iterable, TextIO, Optional
@@ -17,17 +16,6 @@ def _open(path_or_file, mode: str = "r") -> TextIO:
         return path_or_file  # already a file-like
     return open(Path(path_or_file), mode, encoding="utf-8")
 
-
-#----------------extension checker---------------
-def detect_extension(filename):
-    # Check file extension to know if it's FASTA or FASTQ
-    if filename.endswith((".fasta", ".fa",".fsa", ".fna", ".seq",".pep"):
-        return "FASTA"
-    elif filename.endswith(".fastq",".fq"):
-        return "FASTQ"
-    else:
-        return None
-
 #-------------------fasta parser---------------------
 def read_fasta(path_or_file) -> Iterator[Tuple[str, str]]:
     """
@@ -35,7 +23,7 @@ def read_fasta(path_or_file) -> Iterator[Tuple[str, str]]:
     Header returned without leading '>'.
     """
     fh = _open(path_or_file, "r")
-    header: Optional[str] = None
+    header = None
     seq_chunks = []
     for line in fh:
         line = line.strip()
@@ -52,12 +40,11 @@ def read_fasta(path_or_file) -> Iterator[Tuple[str, str]]:
         yield header, "".join(seq_chunks)
 
 #-------------------write fasta sequences------------------
-def write_fasta(records: Iterable[Tuple[str, str]], path_or_file, line_width: int = 80) -> None:
+def write_fasta(records: Iterable[Tuple[str, str]], path_or_file) -> None:
     fh = _open(path_or_file, "w")
     for header, seq in records:
         fh.write(f">{header}\n")
-        for i in range(0, len(seq), line_width):
-            fh.write(seq[i:i+line_width] + "\n")
+        fh.write(seq + "\n")
 
 #-------------------fastq parser--------------------------
 def read_fastq(path_or_file) -> Iterator[Tuple[str, str, str]]:
