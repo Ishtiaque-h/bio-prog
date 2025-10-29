@@ -4,7 +4,6 @@
  Helper/ utility functions
 ------------------------------------------------
 '''
-
 #---------------imports------------------------------
 from .io import _open
 from typing import Tuple
