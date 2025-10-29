@@ -22,6 +22,17 @@ def _open(path_or_file, mode: str = "r") -> TextIO:
         return path_or_file  # already a file-like
     return open(Path(path_or_file), mode, encoding="utf-8")
 
+#----------------extension checker---------------------
+def detect_extension(path_or_file: Path, checked_fmt: str) -> None:
+    """
+    Non-fatal: warn if extension doesn’t match typical sets.
+    """
+    ext = path_or_file.suffix.lower()
+    if checked_fmt == "fasta" and ext and ext not in FASTA_EXTS:
+        print(f"Wrning!!!: Detected FASTA content but extension '{ext}' is uncommon for FASTA.")
+    if checked_fmt == "fastq" and ext and ext not in FASTQ_EXTS:
+        print(f"WARNING!!!: Detected FASTQ content but extension '{ext}' is uncommon for FASTQ.")
+
 #-------------------fasta parser---------------------
 def read_fasta(path_or_file) -> Iterator[Tuple[str, str]]:
     """

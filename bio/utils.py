@@ -7,16 +7,6 @@
 from .io import _open
 from typing import Tuple
 
-#----------------extension checker---------------------
-def detect_extension(filename):
-    # Check file extension to know if it's FASTA or FASTQ
-    if filename.endswith(".fasta", ".fa",".fsa", ".fna", ".seq",".pep"):
-        return "FASTA"
-    elif filename.endswith(".fastq",".fq"):
-        return "FASTQ"
-    else:
-        return None
-
 #----------------fasta/fastq format checker---------------------    
 def sniff_format(path_or_file) -> str:
     """
