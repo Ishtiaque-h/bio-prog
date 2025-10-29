@@ -33,6 +33,28 @@ def detect_extension(path_or_file: Path, checked_fmt: str) -> None:
     if checked_fmt == "fastq" and ext and ext not in FASTQ_EXTS:
         print(f"WARNING!!!: Detected FASTQ content but extension '{ext}' is uncommon for FASTQ.")
 
+#----------------fasta/fastq format checker---------------------    
+def check_format(path_or_file) -> str:
+    """
+    Return 'fasta' or 'fastq' by peeking first non-empty character.
+    Raises ValueError if format cannot be determined.
+    """
+    fh = _open(path_or_file, "r")
+    pos = fh.tell()
+    for line in fh:
+        s = line.strip()
+        if not s:
+            continue
+        if s.startswith(">"):
+            fh.seek(pos)  # reset if it's a real file handle
+            return "fasta"
+        if s.startswith("@"):
+            fh.seek(pos)
+            return "fastq"
+        break
+    fh.seek(pos)
+    raise ValueError("Unable to determine file format (expected FASTA or FASTQ).")
+
 #-------------------fasta parser---------------------
 def read_fasta(path_or_file) -> Iterator[Tuple[str, str]]:
     """

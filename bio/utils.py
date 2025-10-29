@@ -4,30 +4,10 @@
  Helper/ utility functions
 ------------------------------------------------
 '''
+
+#---------------imports------------------------------
 from .io import _open
 from typing import Tuple
-
-#----------------fasta/fastq format checker---------------------    
-def sniff_format(path_or_file) -> str:
-    """
-    Return 'fasta' or 'fastq' by peeking first non-empty character.
-    Raises ValueError if format cannot be determined.
-    """
-    fh = _open(path_or_file, "r")
-    pos = fh.tell()
-    for line in fh:
-        s = line.strip()
-        if not s:
-            continue
-        if s.startswith(">"):
-            fh.seek(pos)  # reset if it's a real file handle
-            return "fasta"
-        if s.startswith("@"):
-            fh.seek(pos)
-            return "fastq"
-        break
-    fh.seek(pos)
-    raise ValueError("Unable to determine file format (expected FASTA or FASTQ).")
 
 #----------------gc and atgc estimator-------------------------
 def gc_and_counts(seq: str) -> Tuple[int, int, int]:
