@@ -55,6 +55,83 @@ def check_format(path_or_file) -> str:
     fh.seek(pos)
     raise ValueError("Unable to determine file format (expected FASTA or FASTQ).")
 
+#----------------fasta validator---------------------  
+def validate_fasta(path: Path) -> None:
+    """
+    Enforces:
+      1) Header lines start with '>' and immediately a non-space name char.
+      2) The immediate next line after a header must begin the sequence (non-empty).
+      3) Sequence names must be unique (name = token until first whitespace).
+      4) Each record must have at least 2 lines (header + >=1 sequence line).
+      5) All sequence lines contain only DNA/RNA/protein characters (uppercase-insensitive).
+    """
+    seen_names = set()
+    with open(path, "r", encoding="utf-8") as fh:
+        lines = fh.readlines()
+
+    if not lines:
+        raise ValueError("No content found.")
+
+    i = 0
+    record_count = 0
+    while i < len(lines):
+        line = lines[i].rstrip("\n")
+        i += 1
+
+        if not line.strip():
+            continue  # skip stray empty lines between records
+
+        # Expect a header
+        if not line.startswith(">"):
+            raise ValueError(f"FASTA error at line {i}: expected '>' header, found: {line[:20]!r}")
+
+        # Rule 1: '>' immediately followed by non-space
+        if len(line) == 1 or line[1].isspace():
+            raise ValueError(f"FASTA error at line {i}: header must have name immediately after '>' with no leading space.")
+
+        # Extract name until first whitespace
+        header = line[1:]
+        name = header.split()[0]
+        if name in seen_names:
+            raise ValueError(f"FASTA error at line {i}: duplicate sequence name '{name}'.")
+        seen_names.add(name)
+
+        # Rule 2 & 4: immediate next non-empty line must be sequence, and there must be at least one
+        if i >= len(lines):
+            raise ValueError(f"FASTA error after line {i}: header '{name}' has no sequence line.")
+        # Allow empty lines, but the first non-empty after header must be sequence content
+        j = i
+        while j < len(lines) and not lines[j].strip():
+            j += 1
+        if j >= len(lines):
+            raise ValueError(f"FASTA error after line {i}: header '{name}' has no sequence line.")
+        if lines[j].startswith(">"):
+            raise ValueError(f"FASTA error at line {j+1}: expected sequence line, found another header.")
+
+        # Now collect sequence lines until next header or EOF; validate chars
+        seq_len_this = 0
+        while j < len(lines):
+            s = lines[j].strip()
+            if not s:
+                j += 1
+                continue
+            if s.startswith(">"):
+                break
+            # Rule 5: validate allowed chars
+            su = s.upper()
+            if any(ch not in FASTA_ALLOWED for ch in su):
+                raise ValueError(f"FASTA error at line {j+1}: invalid character(s) in sequence.")
+            seq_len_this += len(su)
+            j += 1
+
+        if seq_len_this == 0:
+            raise ValueError(f"FASTA error: header '{name}' has no sequence content.")
+        record_count += 1
+        i = j  # continue from next header or EOF
+
+    if record_count == 0:
+        raise ValueError("No FASTA records found.")
+
 #-------------------fasta parser---------------------
 def read_fasta(path_or_file) -> Iterator[Tuple[str, str]]:
     """
