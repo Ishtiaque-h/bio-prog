@@ -12,6 +12,12 @@ from typing import Iterator, Tuple, Iterable, TextIO, Optional
 
 #-----------------file opening handler----------------
 def _open(path_or_file, mode: str = "r") -> TextIO:
+    """
+    Opens a file or returns a file-like object.
+
+    - If path_or_file is a path, it opens it.
+    - If it's already file-like, it returns it.
+    """
     if hasattr(path_or_file, "read"):
         return path_or_file  # already a file-like
     return open(Path(path_or_file), mode, encoding="utf-8")
