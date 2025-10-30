@@ -110,3 +110,15 @@ def cmd_analyze(args: argparse.Namespace) -> None:
     else:
 
         print("Unrecognized operation. Please choose: extract | filter | convert")
+
+def ask_min_len() -> int:
+    while True:
+        s = input("Enter minimum sequence length (integer ≥ 0): ").strip()
+        try:
+            v = int(s)
+            if v < 0:
+                print("Length must be ≥ 0.")
+                continue
+            return v
+        except ValueError:
+            print("Please enter a valid integer.")
