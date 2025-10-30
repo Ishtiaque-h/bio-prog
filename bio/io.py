@@ -132,6 +132,54 @@ def validate_fasta(path: Path) -> None:
     if record_count == 0:
         raise ValueError("No FASTA records found.")
 
+#----------------fastq validator---------------------  
+def validate_fastq(path: Path) -> None:
+    """
+    Enforces:
+      1) Records are in 4-line groups.
+      2) Line 1: '@' immediately followed by name (no space right after '@'); name is until first space.
+      3) Line 2: sequence (non-empty), DNA/RNA characters only (IUPAC allowed).
+      4) Line 3: starts with '+' (free text allowed after).
+      5) Line 4: quality string, same length as sequence.
+      6) Sequence names must be unique.
+    """
+    seen = set()
+    with open(path, "r", encoding="utf-8") as fh:
+        line_no = 0
+        while True:
+            h = fh.readline(); line_no += 1
+            if not h:
+                break  # EOF cleanly on record boundary
+            s = fh.readline(); line_no += 1
+            p = fh.readline(); line_no += 1
+            q = fh.readline(); line_no += 1
+
+            if not (s and p and q):
+                raise ValueError(f"FASTQ error near line {line_no}: truncated record.")
+
+            if not h.startswith("@"):
+                raise ValueError(f"FASTQ error at line {line_no-3}: header must start with '@'.")
+            if len(h.strip()) < 2 or h[1].isspace():
+                raise ValueError(f"FASTQ error at line {line_no-3}: name must immediately follow '@' (no leading space).")
+            header = h[1:].strip()
+            name = header.split()[0]
+            if name in seen:
+                raise ValueError(f"FASTQ error at line {line_no-3}: duplicate sequence name '{name}'.")
+            seen.add(name)
+
+            seq = s.strip().upper()
+            if not seq:
+                raise ValueError(f"FASTQ error at line {line_no-2}: empty sequence line.")
+            if any(ch not in FASTQ_ALLOWED for ch in seq):
+                raise ValueError(f"FASTQ error at line {line_no-2}: invalid character(s) in sequence.")
+
+            if not p.startswith("+"):
+                raise ValueError(f"FASTQ error at line {line_no-1}: third line must start with '+'.")
+
+            qual = q.strip()
+            if len(qual) != len(seq):
+                raise ValueError(f"FASTQ error at line {line_no}: quality length {len(qual)} != sequence length {len(seq)}.")
+
 #-------------------fasta parser---------------------
 def read_fasta(path_or_file) -> Iterator[Tuple[str, str]]:
     """
