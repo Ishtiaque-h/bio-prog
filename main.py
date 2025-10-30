@@ -129,3 +129,11 @@ def build_parser() -> argparse.ArgumentParser:
     a.set_defaults(func=cmd_analyze)
 
     return p
+
+#------------------Main Function------------------------------------
+def main():
+    args = build_parser().parse_args()
+    args.func(args)
+
+if __name__ == "__main__":
+    main()
