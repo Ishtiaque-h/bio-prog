@@ -42,3 +42,13 @@ def filter_by_min_len(input_path: Path, fmt: str, out_path: Path, min_len: int) 
                     yield h, s, q
         io.write_fastq(it(), out_path)
     return kept
+#---------------Converting------------------------------
+def convert_fastq_to_fasta(input_path: Path, out_path: Path) -> int:
+    count = 0
+    def it():
+        nonlocal count
+        for h, s, _q in io.read_fastq(input_path):
+            count += 1
+            yield h, s
+    io.write_fasta(it(), out_path)
+    return count
