@@ -114,3 +114,18 @@ def default_out_name(inp: Path, fmt: str, tag: str) -> Path:
         return inp.with_suffix(f".{tag}.fasta")
     else:
         return inp.with_suffix(f".{tag}.fastq")
+
+#------------------Building Parser------------------------------------
+def build_parser() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(
+        prog="bio-prog",
+        description="Sequence statistics and operations (FASTA/FASTQ)."
+    )
+    sub = p.add_subparsers(dest="cmd", required=True)
+
+    a = sub.add_parser("analyze", help="Print stats, then interactively choose an operation")
+    a.add_argument("-i", "--input", required=True, help="Input FASTA or FASTQ")
+    a.add_argument("-o", "--output", help="Optional output path (operation-dependent)")
+    a.set_defaults(func=cmd_analyze)
+
+    return p
