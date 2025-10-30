@@ -69,48 +69,32 @@ def cmd_analyze(args: argparse.Namespace) -> None:
 
     print_stats(summary)
 
-    # Interactive menu
-
+     # Interactive menu
     print("Choose an operation: 1 for extract | 2 for filter | 3 for convert")
-
     choice = int(input("Enter 1/2//3> ").strip())
 
     if choice == 1:
-
         out = args.output or default_out_name(input_path, fmt, "extract")
-
         ops.extract_random(input_path, fmt, out)
-
         print(f"Wrote random selection to: {out}")
 
     elif choice == 2:
-
         min_len = ask_min_len()
-
         out = args.output or default_out_name(input_path, fmt, f"filter_ge{min_len}")
-
         kept = ops.filter_by_min_len(input_path, fmt, out, min_len)
-
         print(f"Wrote {kept} sequences (len ≥ {min_len}) to: {out}")
 
     elif choice == 3:
-
         if fmt == "fasta":
-
             print("FASTA file can't be converted to FASTQ file.")
-
         else:
-
             out = args.output or input_path.with_suffix(".fasta")
-
             n = ops.convert_fastq_to_fasta(input_path, out)
-
             print(f"Converted {n} sequences FASTQ → FASTA: {out}")
-
     else:
-
         print("Unrecognized operation. Please choose: extract | filter | convert")
-
+        
+#------------------minimum length checker------------------------------------
 def ask_min_len() -> int:
     while True:
         s = input("Enter minimum sequence length (integer ≥ 0): ").strip()
@@ -122,3 +106,11 @@ def ask_min_len() -> int:
             return v
         except ValueError:
             print("Please enter a valid integer.")
+
+#------------------Preserving output file format------------------------------------
+def default_out_name(inp: Path, fmt: str, tag: str) -> Path:
+    # Preserve original format for extract/filter outputs
+    if fmt == "fasta":
+        return inp.with_suffix(f".{tag}.fasta")
+    else:
+        return inp.with_suffix(f".{tag}.fastq")
