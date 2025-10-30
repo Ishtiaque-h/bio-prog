@@ -42,6 +42,7 @@ def filter_by_min_len(input_path: Path, fmt: str, out_path: Path, min_len: int) 
                     yield h, s, q
         io.write_fastq(it(), out_path)
     return kept
+    
 #---------------Converting------------------------------
 def convert_fastq_to_fasta(input_path: Path, out_path: Path) -> int:
     count = 0
