@@ -10,6 +10,20 @@ import os
 from pathlib import Path
 from typing import Iterator, Tuple, Iterable, TextIO, Optional
 
+#---------------global variables------------------------------
+FASTA_EXTS = {".fasta", ".fa", ".fsa", ".fna", ".pep", ".seq"}
+FASTQ_EXTS = {".fastq"}
+
+# Uppercase only; we’ll .upper() sequences before checking
+DNA_CHARS     = set("ACGTNRYSWKMBDHV-")     # IUPAC DNA + gap
+RNA_CHARS     = set("ACGUNRYSWKMBDHV-")     # IUPAC RNA + gap
+PROTEIN_CHARS = set("ACDEFGHIKLMNPQRSTVWYBXZJUO*-")  # 20 AA + common ambiguous + stop/gap
+# Union used for "DNA or RNA or peptide" as per your spec
+FASTA_ALLOWED = DNA_CHARS | RNA_CHARS | PROTEIN_CHARS
+
+# FASTQ typically nucleotides; allow IUPAC DNA/RNA (no peptides in FASTQ by convention)
+FASTQ_ALLOWED = DNA_CHARS | RNA_CHARS
+
 #-----------------file opening handler----------------
 def _open(path_or_file, mode: str = "r") -> TextIO:
     """
