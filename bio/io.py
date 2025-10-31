@@ -12,7 +12,7 @@ from typing import Iterator, Tuple, Iterable, TextIO, Optional
 
 #---------------global variables------------------------------
 FASTA_EXTS = {".fasta", ".fa", ".fsa", ".fna", ".pep", ".seq"}
-FASTQ_EXTS = {".fastq"}
+FASTQ_EXTS = {".fastq", ".fq"}
 
 # Uppercase only; we’ll .upper() sequences before checking
 DNA_CHARS     = set("ACGTNRYSWKMBDHV-")     # IUPAC DNA + gap
