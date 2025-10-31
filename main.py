@@ -38,7 +38,7 @@ def cmd_analyze(args: argparse.Namespace) -> None:
     if not input_path.exists():
         raise SystemExit(f"Error: input file not found: {input_path}")
     if input_path.stat().st_size == 0:
-        raise ValueError("Input file is empty.")
+        raise SystemExit(f"Error: {input_path.name} is an empty file")
 
     try:
         fmt = io.check_format(input_path)  # 'fasta' or 'fastq'
