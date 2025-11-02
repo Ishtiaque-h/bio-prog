@@ -72,80 +72,73 @@ def check_format(path_or_file) -> str:
 #----------------fasta validator---------------------  
 def validate_fasta(path: Path) -> None:
     """
-    Enforces:
-      1) Header lines start with '>' and immediately a non-space name char.
-      2) The immediate next line after a header must begin the sequence (non-empty).
-      3) Sequence names must be unique (name = token until first whitespace).
-      4) Each record must have at least 2 lines (header + >=1 sequence line).
-      5) All sequence lines contain only DNA/RNA/protein characters (uppercase-insensitive).
+    Enforces FASTA format compliance according to INSDC/NCBI guidelines:
+      1) Each record begins with '>' immediately followed by a non-space name.
+      2) No blank lines are allowed anywhere in the file.
+      3) Sequence lines must contain only residue characters (DNA/RNA/protein),
+         with NO spaces or tabs anywhere in the sequence.
+      4) Sequence names must be unique (first token after '>').
+      5) Each record has at least one sequence line.
     """
     seen_names = set()
     with open(path, "r", encoding="utf-8") as fh:
         lines = fh.readlines()
 
     if not lines:
-        raise ValueError("No content found.")
+        raise ValueError("FASTA error: file is empty.")
 
-    i = 0
     record_count = 0
+    i = 0
     while i < len(lines):
         line = lines[i].rstrip("\n")
         i += 1
 
+        # Rule 2: blank lines are not allowed
         if not line.strip():
-            continue  # skip stray empty lines between records
+            raise ValueError(f"FASTA error at line {i}: blank lines are not permitted in FASTA format.")
 
-        # Expect a header
+        # Expect header line
         if not line.startswith(">"):
-            raise ValueError(f"FASTA error at line {i}: expected '>' header, found: {line[:20]!r}")
+            raise ValueError(f"FASTA error at line {i}: expected header starting with '>', found {line[:20]!r}.")
 
-        # Rule 1: '>' immediately followed by non-space
+        # Rule 1: '>' immediately followed by a non-space name
         if len(line) == 1 or line[1].isspace():
-            raise ValueError(f"FASTA error at line {i}: header must have name immediately after '>' with no leading space.")
+            raise ValueError(f"FASTA error at line {i}: header must have name immediately after '>' (no space allowed).")
 
-        # Extract name until first whitespace
-        header = line[1:]
+        header = line[1:].strip()
         name = header.split()[0]
         if name in seen_names:
             raise ValueError(f"FASTA error at line {i}: duplicate sequence name '{name}'.")
         seen_names.add(name)
 
-        # Rule 2 & 4: immediate next non-empty line must be sequence, and there must be at least one
+        # At least one following line must exist
         if i >= len(lines):
-            raise ValueError(f"FASTA error after line {i}: header '{name}' has no sequence line.")
-        # Allow empty lines, but the first non-empty after header must be sequence content
-        j = i
-        while j < len(lines) and not lines[j].strip():
-            j += 1
-        if j >= len(lines):
-            raise ValueError(f"FASTA error after line {i}: header '{name}' has no sequence line.")
-        if lines[j].startswith(">"):
-            raise ValueError(f"FASTA error at line {j+1}: expected sequence line, found another header.")
+            raise ValueError(f"FASTA error after line {i}: header '{name}' has no sequence lines.")
 
-        # Now collect sequence lines until next header or EOF; validate chars
         seq_len_this = 0
-        while j < len(lines):
-            s = lines[j].strip()
+        while i < len(lines):
+            s = lines[i].rstrip("\n")
             if not s:
-                j += 1
-                continue
+                raise ValueError(f"FASTA error at line {i+1}: blank lines are not permitted in FASTA format.")
             if s.startswith(">"):
                 break
-            # Rule 5: validate allowed chars
+            # Rule 3: sequence lines must contain no spaces or tabs
+            if any(ch.isspace() for ch in s):
+                raise ValueError(f"FASTA error at line {i+1}: spaces or tabs are not allowed within sequence lines.")
+            # Rule 5: only allowed alphabetic characters
             su = s.upper()
             if any(ch not in FASTA_ALLOWED for ch in su):
-                raise ValueError(f"FASTA error at line {j+1}: invalid character(s) in sequence.")
+                raise ValueError(f"FASTA error at line {i+1}: invalid character found in sequence.")
             seq_len_this += len(su)
-            j += 1
+            i += 1
 
         if seq_len_this == 0:
             raise ValueError(f"FASTA error: header '{name}' has no sequence content.")
+
         record_count += 1
-        i = j  # continue from next header or EOF
 
     if record_count == 0:
-        raise ValueError("No FASTA records found.")
-
+        raise ValueError("FASTA error: no valid records found.")
 #----------------fastq validator---------------------  
 def validate_fastq(path: Path) -> None:
     """
