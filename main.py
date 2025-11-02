@@ -121,41 +121,46 @@ def cmd_analyze(args: argparse.Namespace) -> None:
         print("  4: Exit menu")
         
         choice_str = input("Enter a number (1-4): ").strip()
+
+        try:
             
-        choice = int(choice_str)
+            choice = int(choice_str)
 
-        if choice == 1:
-            out = args.output or default_out_name(input_path, fmt, "extract")
-            ops.extract_random(input_path, fmt, out)
-            print(f"Wrote random selection to: {out}")
-            break  # Exit loop on success
+            if choice == 1:
+                out = args.output or default_out_name(input_path, fmt, "extract")
+                ops.extract_random(input_path, fmt, out)
+                print(f"Wrote random selection to: {out}")
+                break  # Exit loop on success
 
-        elif choice == 2:
-            min_len = ask_min_len()
-            out = args.output or default_out_name(input_path, fmt, f"filter_ge{min_len}")
-            kept = ops.filter_by_min_len(input_path, fmt, out, min_len)
-            print(f"Wrote {kept} sequences (len ≥ {min_len}) to: {out}")
-            break  # Exit loop on success
+            elif choice == 2:
+                min_len = ask_min_len()
+                out = args.output or default_out_name(input_path, fmt, f"filter_ge{min_len}")
+                kept = ops.filter_by_min_len(input_path, fmt, out, min_len)
+                print(f"Wrote {kept} sequences (len ≥ {min_len}) to: {out}")
+                break  # Exit loop on success
 
-        elif choice == 3:
-            if fmt == "fasta":
-                print("FASTA file can't be converted to FASTQ file.")
+            elif choice == 3:
+                if fmt == "fasta":
+                    print("FASTA file can't be converted to FASTQ file.")
+                else:
+                    out = args.output or input_path.with_suffix(".fasta")
+                    n = ops.convert_fastq_to_fasta(input_path, out)
+                    print(f"Converted {n} sequences FASTQ → FASTA: {out}")
+                break  # Exit loop (even if conversion was not possible)
+
+            elif choice == 4:
+                print("Exiting interactive menu.")
+                break # User chose to exit
+
             else:
-                out = args.output or input_path.with_suffix(".fasta")
-                n = ops.convert_fastq_to_fasta(input_path, out)
-                print(f"Converted {n} sequences FASTQ → FASTA: {out}")
-            break  # Exit loop (even if conversion was not possible)
+                # Handle numbers out of range (e.g., 5, 0, -1)
+                print(f"Error: Invalid choice '{choice}'. Please enter a number between 1 and 4.")
+                # No break, loop continues
 
-        elif choice == 4:
-            print("Exiting interactive menu.")
-            break # User chose to exit
-
-        else:
-            # Handle numbers out of range (e.g., 5, 0, -1)
-            print(f"Error: Invalid choice '{choice}'. Please enter a number between 1 and 4.")
+        except ValueError:
+            # Handle non-integer input (e.g., "apple")
+            print(f"Error: Unrecognized operation '{choice_str}'. Please enter a number (1-4).")
             # No break, loop continues
-
-
     
     # --- END OF INTERACTIVE MENU ---
         
