@@ -134,6 +134,13 @@ def cmd_analyze(args: argparse.Namespace) -> None:
 
             elif choice == 2:
                 min_len = ask_min_len()
+
+                # Handle when no sequence is filtered
+                if min_len > summary["largest_len"]:
+                    print(f"Provided length is greater than the largest seuence length {summary['largest_len']}. Enter a valid length")
+                    continue
+
+                # Write only if there is a filtered sequence
                 out = args.output or default_out_name(input_path, fmt, f"filter_ge{min_len}")
                 kept = ops.filter_by_min_len(input_path, fmt, out, min_len)
                 print(f"Wrote {kept} sequences (len ≥ {min_len}) to: {out}")
