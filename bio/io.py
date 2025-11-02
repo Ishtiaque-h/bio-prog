@@ -90,7 +90,7 @@ def validate_fasta(path: Path) -> None:
             line_no += 1
             line = raw.rstrip("\n")
 
-            # Rule 2: no blank lines anywhere
+            # Rule 2: no empty lines allowed anywhere
             if not line.strip():
                 raise ValueError(f"FASTA error at line {line_no}: blank lines are not permitted.")
 
@@ -101,7 +101,7 @@ def validate_fasta(path: Path) -> None:
 
                 # Rule 1: '>' immediately followed by non-space name
                 if len(line) == 1 or line[1].isspace():
-                    raise ValueError(f"FASTA error at line {line_no}: header must have name immediately after '>' (no space).")
+                    raise ValueError(f"FASTA error at line {line_no}: header must have sequence name immediately after '>' (no leading space).")
 
                 header = line[1:].strip()
                 name = header.split()[0]
@@ -121,9 +121,9 @@ def validate_fasta(path: Path) -> None:
             if not in_seq:
                 raise ValueError(f"FASTA error at line {line_no}: expected header starting with '>' before sequence data.")
 
-            # Rule 3: no whitespace within sequence lines
+            # Rule 3: No whitespace within sequence lines
             if any(ch.isspace() for ch in line):
-                raise ValueError(f"FASTA error at line {line_no}: spaces or tabs are not allowed within sequence lines.")
+                raise ValueError(f"FASTA error at line {line_no}: whitespaces are not allowed within sequence lines.")
 
             # Allowed alphabet check (case-insensitive)
             su = line.upper()
@@ -145,48 +145,72 @@ def validate_fastq(path: Path) -> None:
     Enforces:
       1) Records are in 4-line groups.
       2) Line 1: '@' immediately followed by name (no space right after '@'); name is until first space.
-      3) Line 2: sequence (non-empty), DNA/RNA characters only (IUPAC allowed).
-      4) Line 3: starts with '+' (free text allowed after).
-      5) Line 4: quality string, same length as sequence.
+      3) Line 2: sequence (non-empty, non-spaced, single-line), DNA/RNA characters only (IUPAC allowed).
+      4) Line 3: starts with '+' (additional text allowed after).
+      5) Line 4: quality string — same length as seq, printable ASCII 33–126 only, no whitespace
       6) Sequence names must be unique.
     """
-    seen = set()
+    seen_names = set()
     with open(path, "r", encoding="utf-8") as fh:
         line_no = 0
         while True:
             h = fh.readline(); line_no += 1
-            if not h:
-                break  # EOF cleanly on record boundary
-            s = fh.readline(); line_no += 1
+            s = fh.readline(); line_no += 1     
             p = fh.readline(); line_no += 1
             q = fh.readline(); line_no += 1
 
+            # Rule 1: Records are 4-line groups. Handle truncated records.
             if not (s and p and q):
-                raise ValueError(f"FASTQ error near line {line_no}: truncated record.")
+                raise ValueError(f"FASTQ error near line {line_no}: incomplete records are not permitted.")
 
+            # Rule 2: line 1 includes header
             if not h.startswith("@"):
                 raise ValueError(f"FASTQ error at line {line_no-3}: header must start with '@'.")
-            if len(h.strip()) < 2 or h[1].isspace():
-                raise ValueError(f"FASTQ error at line {line_no-3}: name must immediately follow '@' (no leading space).")
+            
+            # seq name must immediately follow '@' (no space)
+            if len(h.rstrip('\n')) == 1 or h[1].isspace():
+                raise ValueError(f"FASTQ error at line {line_no-3}: header must have sequence name immediately after '@' (no leading space).")
             header = h[1:].strip()
             name = header.split()[0]
-            if name in seen:
-                raise ValueError(f"FASTQ error at line {line_no-3}: duplicate sequence name '{name}'.")
-            seen.add(name)
 
-            seq = s.strip().upper()
+            # Rule 6: Sequence names must be unique
+            if name in seen_names:
+                raise ValueError(f"FASTQ error at line {line_no-3}: duplicate sequence name '{name}'.")
+            seen_names.add(name)
+
+            # Rule 3: Allow non-empty sequence in line 2 with neucleotides only (no space, no multiline)
+            seq_raw = s.rstrip("\n")
+
+            # No whitespace within sequence line
+            if any(ch.isspace() for ch in seq_raw):
+                raise ValueError(f"FASTQ error at line {line_no-2}: whitespaces are not allowed in sequence.")
+            seq = seq_raw.upper()
+            
+            # Allow non-empty sequence line
             if not seq:
                 raise ValueError(f"FASTQ error at line {line_no-2}: empty sequence line.")
-            if any(ch not in FASTQ_ALLOWED for ch in seq):
-                raise ValueError(f"FASTQ error at line {line_no-2}: invalid character(s) in sequence.")
 
-            if not p.startswith("+"):
+            # Allow nucleotide characters only
+            if any(ch not in FASTQ_ALLOWED for ch in seq):
+                raise ValueError(f"FASTQ error at line {line_no-2}: invalid character in sequence.")
+
+            # Rule 4: Line 3 starts with '+' (free text allowed after).
+            plus_raw = p.rstrip("\n")
+            if not plus_raw.startswith("+"):
                 raise ValueError(f"FASTQ error at line {line_no-1}: third line must start with '+'.")
 
-            qual = q.strip()
+            # Rule 5: Line 4 is quality string — same length as seq, printable ASCII 33–126 only, no whitespace
+            qual = q.rstrip("\n")
             if len(qual) != len(seq):
                 raise ValueError(f"FASTQ error at line {line_no}: quality length {len(qual)} != sequence length {len(seq)}.")
-
+            
+            # No whitespace within quality line
+            if any(ch.isspace() for ch in qual):
+                raise ValueError(f"FASTQ error at line {line_no}: whitespaces are not allowed in quality.")        
+        
+    if not seen_names:
+        raise ValueError("FASTA error: no valid records found.")
+    
 #-------------------fasta parser---------------------
 def read_fasta(path_or_file) -> Iterator[Tuple[str, str]]:
     """
