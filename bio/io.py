@@ -214,7 +214,11 @@ def validate_fastq(path: Path) -> None:
             
             # No whitespace within quality line
             if any(ch.isspace() for ch in qual):
-                raise ValueError(f"FASTQ error at line {line_no}: whitespaces are not allowed in quality.")        
+                raise ValueError(f"FASTQ error at line {line_no}: whitespaces are not allowed in quality.")
+            
+            # Phred+33 typical printable ASCII range '!' (33) to '~' (126)
+            if any(not (33 <= ord(ch) <= 126) for ch in qual):
+                raise ValueError(f"FASTQ error at line {line_no}: quality contains non-printable characters (must be ASCII 33–126).")
         
     if not seen_names:
         raise ValueError("FASTA error: no valid records found.")
