@@ -69,49 +69,6 @@ def cmd_analyze(args: argparse.Namespace) -> None:
 
     print_stats(summary)
 
-     # Interactive menu
-    import argparse
-from pathlib import Path
-# Assuming 'io', 'stats_mod', 'ops', 'print_stats', 
-# 'default_out_name', and 'ask_min_len' are defined/imported elsewhere
-
-def cmd_analyze(args: argparse.Namespace) -> None:
-    input_path = Path(args.input)
-    # Fails fast if the input path/file is empty.
-    if not input_path.exists():
-        raise SystemExit(f"Error: input file not found: {input_path}")
-    if input_path.stat().st_size == 0:
-        raise SystemExit(f"Error: {input_path.name} is an empty file")
-
-    try:
-        fmt = io.check_format(input_path)  # 'fasta' or 'fastq'
-    except Exception as e:
-        raise SystemExit(f"Error detecting file format: {e}")
-    
-    """
-    for invalid extension we are generating a soft warning, not restricting further.
-    We will let the user to access a correct file with accidentally wrong extension
-    """
-    io.detect_extension(input_path, fmt) # soft warning 
-
-    try:
-        if fmt == "fasta":
-            io.validate_fasta(input_path)
-        else:
-            io.validate_fastq(input_path)
-    except Exception as e:
-        raise SystemExit(f"Corrupted or invalid {fmt.upper()} file: {e}")
-
-    try:
-        if fmt == "fasta":
-            summary = stats_mod.summarize_fasta(io.read_fasta(input_path))
-        else:
-            summary = stats_mod.summarize_fastq(io.read_fastq(input_path))
-    except Exception as e:
-        raise SystemExit(f"Error while reading/parsing sequences: {e}")
-
-    print_stats(summary)
-
     # --- INTERACTIVE MENU ---
     while True:  # Loop until user makes a valid choice or exits
         print("\nChoose an operation:")
@@ -174,7 +131,6 @@ def cmd_analyze(args: argparse.Namespace) -> None:
             # No break, loop continues
     
     # --- END OF INTERACTIVE MENU ---
-        
         
 #------------------minimum length checker------------------------------------
 def ask_min_len() -> int:
