@@ -155,6 +155,14 @@ def validate_fastq(path: Path) -> None:
         line_no = 0
         while True:
             h = fh.readline(); line_no += 1
+
+            if not h:
+                break       # EOF cleanly on record boundary
+            
+            # No empty lines allowed anywhere.
+            if not h.rstrip('\n'):
+                raise ValueError(f"FASTQ error at line {line_no}: blank lines are not permitted.")
+
             s = fh.readline(); line_no += 1     
             p = fh.readline(); line_no += 1
             q = fh.readline(); line_no += 1
