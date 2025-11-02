@@ -123,6 +123,10 @@ def cmd_analyze(args: argparse.Namespace) -> None:
         choice_str = input("Enter a number (1-4): ").strip()
 
         try:
+            # Handle empty input
+            if not choice_str:
+                print("Error: No input provided. Please enter a number.")
+                continue  # Go back to the start of the loop
             
             choice = int(choice_str)
 
@@ -139,7 +143,7 @@ def cmd_analyze(args: argparse.Namespace) -> None:
                 if min_len > summary["largest_len"]:
                     print(f"Provided length is greater than the largest seuence length {summary['largest_len']}. Enter a valid length")
                     continue
-
+                
                 # Write only if there is a filtered sequence
                 out = args.output or default_out_name(input_path, fmt, f"filter_ge{min_len}")
                 kept = ops.filter_by_min_len(input_path, fmt, out, min_len)
