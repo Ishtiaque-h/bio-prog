@@ -82,7 +82,7 @@ Average # of Ns/sequence: 0.12
 ============================================================
 Choose an operation (type keyword): extract | filter | convert
 > extract
-✅ Wrote random selection to: data/example.extract.fasta
+Wrote random selection to: data/example.extract.fasta
 ```
 
 ---
@@ -143,8 +143,10 @@ Choose an operation (type keyword): extract | filter | convert
 * **Empty document:** tested empty `.txt` → correct “empty file” error.
 * **Corrupted content:**
 
-  * FASTA file with gibberish after “>” correctly flagged as invalid.
-  * FASTQ with numbers in sequence raised a line-specific error.
+  * FASTA or FASTQ validators enforced standard sequencing rules and exceptions were handles carefully.
+  * FASTA or FASTQ file with gibberish after “>” or "@" correctly flagged as invalid.
+  * Both file with unwanted empty lines and whitespaces were handled carefully.
+  * Both with illegal characters in sequence raised a line-specific error.
 * **Truncated file tests:** single `@` or `>` line correctly reported as “truncated record.”
 * **Extension handling:** invalid extensions trigger a soft warning; program proceeds.
 
@@ -155,7 +157,8 @@ Choose an operation (type keyword): extract | filter | convert
 
 #### Part 3 – Interactive Operations
 
-* Interactive menu uses simple keywords to avoid typos.
+* Interactive menu uses simple number values as options to avoid typos.
+* All possible exceptions were handled gracefully.
 * `extract`: uses `random.sample()` to pick 25 sequences.
 * `filter`: user-defined min length → sequences ≥ threshold written to output;
   if threshold > largest length, outputs “0 sequences” and doesn’t write a file.
@@ -171,7 +174,6 @@ All tests confirmed graceful failure handling — no unhandled exceptions or cra
 * **Strict structure + soft content validation:** only structural corruption halts execution.
 * **Fail fast:** detect obvious corruption early.
 * **Clear user feedback:** all errors include line numbers and context.
-* **Random sampling reproducibility:** easily extended with `--seed`.
 * **Git discipline:** modular commits and meaningful PR reviews (implementation vs. review roles maintained).
 
 ---
@@ -192,8 +194,10 @@ All tests confirmed graceful failure handling — no unhandled exceptions or cra
 
 | Role      | Name                | Responsibility                                  |
 | --------- | ------------------- | ----------------------------------------------- |
-| Developer | *Your Partner Name* | Implementation & testing                        |
-| Reviewer  | *Your Name*         | Code review, documentation, validation strategy |
+| Lead      | Ishtiaque           | Design, Implementation & testing                |
+| Developer | Zainab              | Implementation & testing                        |
+| Developer | Eric                | Implementation & testing                        |
+| Reviewer  | Ishtiaque           | Code review, documentation, validation strategy |
 
 ---
 
@@ -201,6 +205,12 @@ All tests confirmed graceful failure handling — no unhandled exceptions or cra
 
 * Add reservoir sampling for very large FASTA/FASTQ datasets.
 * Integrate unit tests with `pytest` for CI workflows.
+
+---
+
+### 👍 Acknowledgement
+
+AI tools (ChatGPT & Gemini) was used to design, test and improve code; to preapre README file.  
 
 ---
 
