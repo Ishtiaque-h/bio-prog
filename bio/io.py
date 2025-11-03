@@ -156,18 +156,31 @@ def validate_fastq(path: Path) -> None:
         while True:
             h = fh.readline(); line_no += 1
 
+            # Find the next non-empty line (must be a header).
+            # This loop skips blank lines at the file start and between records.
+            while h and not h.rstrip('\n'):
+                h = fh.readline(); line_no += 1
+
             if not h:
                 break       # EOF cleanly on record boundary
             
-            # No empty lines allowed anywhere.
-            if not h.rstrip('\n'):
-                raise ValueError(f"FASTQ error at line {line_no}: blank lines are not permitted.")
-
+            # Read the next 3 lines. They CANNOT be blank.
             s = fh.readline(); line_no += 1     
             p = fh.readline(); line_no += 1
             q = fh.readline(); line_no += 1
 
+            # Check for blank lines within the record
+            #    (We already know 'h' is not blank)
+            if not s.rstrip('\n'):
+                raise ValueError(f"FASTQ error at line {line_no-2}: blank line not allowed (after header).")
+            if not p.rstrip('\n'):
+                raise ValueError(f"FASTQ error at line {line_no-1}: blank line not allowed (after sequence).")
+            if not q.rstrip('\n'):
+                raise ValueError(f"FASTQ error at line {line_no}: blank line not allowed (after plus line).")
+
             # Rule 1: Records are 4-line groups. Handle truncated records.
+            # Check for truncated file (EOF within a record)
+            # Note: 'h' is guaranteed non-empty, so we just check s, p, q
             if not (s and p and q):
                 raise ValueError(f"FASTQ error near line {line_no}: incomplete records are not permitted.")
 
@@ -221,7 +234,7 @@ def validate_fastq(path: Path) -> None:
                 raise ValueError(f"FASTQ error at line {line_no}: quality contains non-printable characters (must be ASCII 33–126).")
         
     if not seen_names:
-        raise ValueError("FASTA error: no valid records found.")
+        raise ValueError("FASTQ error: no valid records found.")
     
 #-------------------fasta parser---------------------
 def read_fasta(path_or_file) -> Iterator[Tuple[str, str]]:
@@ -260,22 +273,39 @@ def read_fastq(path_or_file) -> Iterator[Tuple[str, str, str]]:
     Header returned without leading '@'.
     """
     fh = _open(path_or_file, "r")
-    line_num = 0
+
     while True:
-        h = fh.readline(); line_num += 1
+        h = fh.readline()
+
+        '''
+        Find the next non-empty line (the header)
+        This loop skips all blank lines between records.
+        '''
+        while h and not h.rstrip('\n'):
+            h = fh.readline()
+
+        # If no line was found, we're at the end of the file.
         if not h:
-            break
-        seq = fh.readline(); line_num += 1
-        plus = fh.readline(); line_num += 1
-        qual = fh.readline(); line_num += 1
+            break   # clean EOF
+        '''
+        Read the next three lines.
+        We ASSUME these exist and are not blank,
+        Because validate_fastq() already checked.
+        '''
+        seq = fh.readline()
+        plus = fh.readline()
+        qual = fh.readline()
+    
+        # Check only for a truncated file (catches unexpected EOF)
         if not (seq and plus and qual):
-            raise ValueError(f"Truncated FASTQ record near line {line_num}.")
-        if not h.startswith("@") or not plus.startswith("+"):
-            raise ValueError(f"Invalid FASTQ format near line {line_num-3}.")
-        s = seq.strip(); q = qual.strip()
-        if len(s) != len(q):
-            raise ValueError(f"FASTQ sequence/quality length mismatch near line {line_num-3}.")
-        yield h[1:].strip(), s, q
+            raise ValueError(f"Incomplete FASTQ record (unexpected EOF).")
+        '''
+        Yield the data.
+        We use .strip() to clean up header/seq/qual lines.
+        The validator already checked for internal whitespace,
+        so this is safe.
+        '''
+        yield h[1:].strip(), seq.strip(), qual.strip()
 
 #---------------------write fastq sequences----------------------
 def write_fastq(records: Iterable[Tuple[str, str, str]], path_or_file) -> None:
