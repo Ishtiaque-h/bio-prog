@@ -207,6 +207,6 @@ All tests confirmed graceful failure handling — no unhandled exceptions or cra
 ### 🧾 License
 
 Developed for **BINF690:Programming in Bioinformatics** graduate course.
-© 2025 Team <ishtiaque, Zainab and >. For academic use only.
+© 2025 Team <ishtiaque, Zainab and Eric>. For academic use only.
 
 ---
