@@ -92,7 +92,15 @@ def validate_fasta(path: Path) -> None:
 
             # Rule 2: no empty lines allowed anywhere
             if not line.strip():
-                raise ValueError(f"FASTA error at line {line_no}: blank lines are not permitted.")
+                if in_seq:
+                    # Error: We are inside a record, blank lines are not allowed here.
+                    raise ValueError(
+                        f"FASTA error at line {line_no}: blank lines are not permitted "
+                        f"within a sequence record (after header '{current_name}')."
+                    )
+                else:
+                    # We are between records (or at file start). This is fine.
+                    continue
 
             if line.startswith(">"):  # header line
                 # If we were in a record, ensure it had at least one sequence line
@@ -117,7 +125,8 @@ def validate_fasta(path: Path) -> None:
                 seq_len_this = 0
                 continue
 
-            # Sequence line (multi-line allowed)
+            # Sequence line processing (multi-line allowed)
+            # If we see a sequence line but weren't in a record, it's an error
             if not in_seq:
                 raise ValueError(f"FASTA error at line {line_no}: expected header starting with '>' before sequence data.")
 
@@ -130,7 +139,7 @@ def validate_fasta(path: Path) -> None:
             if any(ch not in FASTA_ALLOWED for ch in su):
                 raise ValueError(f"FASTA error at line {line_no}: invalid character(s) found in sequence.")
 
-            seq_len_this += len(su)
+            seq_len_this += len(su)     # We found valid sequence data
 
     # EOF: if file ended while inside a record, ensure we saw at least one sequence line
     if in_seq and seq_len_this == 0:
