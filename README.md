@@ -222,6 +222,6 @@ AI tools (ChatGPT & Gemini) was used to design, test and improve code; to preapr
 ### 🧾 License
 
 Developed for **BINF690:Programming in Bioinformatics** graduate course.
-© 2025 Team <ishtiaque & Zainab>. For academic use only.
+© 2025 Team <Ishtiaque & Zainab>. For academic use only.
 
 ---
