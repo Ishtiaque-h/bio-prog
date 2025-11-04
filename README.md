@@ -52,8 +52,8 @@ project1_sequence_file_manipulation/
 
 ```bash
 # 1. Clone the repository
-git clone http://beadle.dbi.udel.edu:9000/ishtiaq/project1_sequence_file_manipulation.git
-cd project1_sequence_file_manipulation
+git clone https://github.com/Ishtiaque-h/bio-prog.git
+cd bio-prog
 
 # 2. Optional: create a virtual environment
 python3 -m venv .venv && source .venv/bin/activate
