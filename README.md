@@ -68,21 +68,27 @@ python main.py analyze -i data/example.fasta
 Example output:
 
 ```
+Wrning!!!: Detected FASTA content but extension '.fs' is uncommon for FASTA.
 ============================================================
 File statistics
 ============================================================
-Total sequences         : 120
-Average length          : 512.36
-Largest length          : 890
-Largest sequence name(s): seq_0042, seq_0711
-Smallest length         : 300
-Smallest sequence name(s): seq_0098
-Average GC-content (%)  : 48.73
-Average # of Ns/sequence: 0.12
+Total sequences         : 8
+Average length          : 514.13
+Largest length          : 1183
+Largest sequence name(s): 1HF_002 length: 572 gc: 225 gcpercent: 0.393356643356643
+Smallest length         : 258
+Smallest sequence name(s): 1DR_006 length: 258 gc: 104 gcpercent: 0.403100775193798
+Average GC-content (%)  : 63.79
+Average # of Ns/sequence: 0.0
 ============================================================
-Choose an operation (type keyword): extract | filter | convert
-> extract
-Wrote random selection to: data/example.extract.fasta
+
+Choose an operation:
+  1: Extract random sequences
+  2: Filter by minimum length
+  3: Convert FASTQ to FASTA
+  4: Exit menu
+Enter a number (1-4): 1
+Wrote random selection to: tests/rna.extract.fasta
 ```
 
 ---
