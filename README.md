@@ -1,7 +1,7 @@
 
 ---
 
-## 🧬 Project 1 — Sequence File Statistics and Manipulation
+## 🧬 Project — Bio-prog: Sequence File Statistics and Manipulation
 
 ### 🎯 Objective
 
