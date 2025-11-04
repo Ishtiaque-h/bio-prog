@@ -1,8 +1,12 @@
 # ignore system files
 DS_Store
+.DS_Store
 .venv
+.gitignore
 
 # ignore data files
 data/
-test/
+tests/
+bio/__pycache__/
+tasks/__pycache__/
 
