@@ -54,15 +54,12 @@ project1_sequence_file_manipulation/
 # 1. Clone the repository
 git clone https://github.com/Ishtiaque-h/bio-prog.git
 cd bio-prog
-
-# 2. Optional: create a virtual environment
-python3 -m venv .venv && source .venv/bin/activate
 ```
 
 #### ▶ Run the program
 
 ```bash
-python main.py analyze -i data/example.fasta
+python main.py analyze -i file_path_or_name
 ```
 
 Example output:
