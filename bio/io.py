@@ -11,8 +11,8 @@ from pathlib import Path
 from typing import Iterator, Tuple, Iterable, TextIO, Optional
 
 #---------------global variables------------------------------
-FASTA_EXTS = {".fasta", ".fa", ".fsa", ".fna", ".pep", ".seq"}
-FASTQ_EXTS = {".fastq", ".fq"}
+FASTA_EXTS = {".fasta", ".fa", ".fsa", ".fna", ".pep", ".seq"}  # valid FASTA extensions
+FASTQ_EXTS = {".fastq", ".fq"}                                  # valid FASTQ extensions
 
 # Uppercase only; we’ll .upper() sequences before checking
 DNA_CHARS     = set("ACGTNRYSWKMBDHV-")     # IUPAC DNA + gap
@@ -31,6 +31,7 @@ def _open(path_or_file, mode: str = "r") -> TextIO:
 
     - If path_or_file is a path, it opens it.
     - If it's already file-like, it returns it.
+    - This allows flexibility in accepting both file paths and file handles
     """
     if hasattr(path_or_file, "read"):
         return path_or_file  # already a file-like
@@ -39,7 +40,9 @@ def _open(path_or_file, mode: str = "r") -> TextIO:
 #----------------extension checker---------------------
 def detect_extension(path_or_file: Path, checked_fmt: str) -> None:
     """
-    Non-fatal: warn if extension doesn’t match typical sets.
+    Warn if file extension doesn’t match detected format.
+    Non-fatal — continues execution.
+    Helps catch potential file naming issues early.
     """
     ext = path_or_file.suffix.lower()
     if checked_fmt == "fasta" and ext and ext not in FASTA_EXTS:
@@ -52,9 +55,11 @@ def check_format(path_or_file) -> str:
     """
     Return 'fasta' or 'fastq' by peeking first non-empty character.
     Raises ValueError if format cannot be determined.
+    Auto-detects file format by examining the first non-blank line.
+    Uses '>' for FASTA and '@' for FASTQ as distinguishing markers.
     """
     fh = _open(path_or_file, "r")
-    pos = fh.tell()
+    pos = fh.tell() # Save position to reset file pointer after peeking
     for line in fh:
         s = line.strip()
         if not s:
@@ -65,7 +70,7 @@ def check_format(path_or_file) -> str:
         if s.startswith("@"):
             fh.seek(pos)
             return "fastq"
-        break
+        break   # Stop after first non-empty line
     fh.seek(pos)
     raise ValueError("Unable to determine file format (expected FASTA or FASTQ).")
 
@@ -75,11 +80,14 @@ def validate_fasta(path: Path) -> None:
     FASTA validation:
       1) Each record begins with '>' immediately followed by a non-space name.
       2) No blank lines anywhere in the file.
-      3) Sequence lines contain only residue characters (DNA/RNA/protein), NO spaces/tabs.
-      4) Sequence names (first token after '>') must be unique.
-      5) Each record must have >= 1 sequence line (multi-line sequences allowed).
+      3) Sequence lines must contain only residue characters (DNA/RNA/protein),
+      with NO spaces or tabs anywhere in the sequence.
+      4) Sequence names must be unique (first token after '>').
+      5)  ≥1 sequence line per record.
+      # Comprehensive validation ensures file integrity before processing.
+      # Tracks sequence names to enforce uniqueness constraint.
     """
-    seen_names = set()
+    seen_names = set()  # Track unique names to prevent duplicates*
     line_no = 0
     in_seq = False
     seq_len_this = 0
@@ -112,7 +120,7 @@ def validate_fasta(path: Path) -> None:
                     raise ValueError(f"FASTA error at line {line_no}: header must have sequence name immediately after '>' (no leading space).")
 
                 header = line[1:].strip()
-                name = header.split()[0]
+                name = header.split()[0]    # Extract first token as sequence name
 
                 # Rule 4: unique names
                 if name in seen_names:
@@ -158,8 +166,10 @@ def validate_fastq(path: Path) -> None:
       4) Line 3: starts with '+' (additional text allowed after).
       5) Line 4: quality string — same length as seq, printable ASCII 33–126 only, no whitespace
       6) Sequence names must be unique.
+      # Strict 4-line format validation ensures FASTQ integrity
+      # Quality scores validated for proper Phred+33 encoding
     """
-    seen_names = set()
+    seen_names = set()  # Track unique names to prevent duplicates
     with open(path, "r", encoding="utf-8") as fh:
         line_no = 0
         while True:
@@ -201,7 +211,7 @@ def validate_fastq(path: Path) -> None:
             if len(h.rstrip('\n')) == 1 or h[1].isspace():
                 raise ValueError(f"FASTQ error at line {line_no-3}: header must have sequence name immediately after '@' (no leading space).")
             header = h[1:].strip()
-            name = header.split()[0]
+            name = header.split()[0]    # Extract first token as sequence name
 
             # Rule 6: Sequence names must be unique
             if name in seen_names:
@@ -250,10 +260,13 @@ def read_fasta(path_or_file) -> Iterator[Tuple[str, str]]:
     """
     Yield (header, sequence) from a FASTA file.
     Header returned without leading '>'.
+    Generator function for memory-efficient processing of large files.
+    Automatically handles multi-line sequences by concatenating them.
+
     """
     fh = _open(path_or_file, "r")
     header = None
-    seq_chunks = []
+    seq_chunks = [] # Collect sequence lines for multi-line sequences
     for line in fh:
         line = line.strip()
         if not line:
@@ -264,7 +277,7 @@ def read_fasta(path_or_file) -> Iterator[Tuple[str, str]]:
             header = line[1:].strip()
             seq_chunks = []
         else:
-            seq_chunks.append(line)
+            seq_chunks.append(line)  # Accumulate sequence lines
     if header is not None:
         yield header, "".join(seq_chunks)
 
